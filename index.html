@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dare Battle 1v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #07070f;
+  --bg2:      #0d0d1c;
+  --surface:  #111124;
+  --surface2: #181830;
+  --border:   #252548;
+  --border2:  #30305a;
+  --text:     #e2e2ff;
+  --muted:    #5a5a8a;
+  --muted2:   #3a3a6a;
+  --red:    #ff4757;
+  --red2:   #c0392b;
+  --purple: #8b5cf6;
+  --purple2:#6d28d9;
+  --gold:   #ffd32a;
+  --gold2:  #f9a825;
+  --green:  #2ed573;
+  --green2: #27ae60;
+  --glow-red:    0 0 20px rgba(255,71,87,0.4);
+  --glow-purple: 0 0 20px rgba(139,92,246,0.4);
+  --glow-gold:   0 0 20px rgba(255,211,42,0.4);
+  --glow-green:  0 0 20px rgba(46,213,115,0.4);
+  --r-sm: 10px; --r-md: 16px; --r-lg: 22px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.screen { display: none; width: 100%; max-width: 480px; position: relative; z-index: 1; }
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  animation: screenIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes screenIn {
+  from { opacity:0; transform:translateY(22px) scale(0.97); }
+  to   { opacity:1; transform:translateY(0)    scale(1);    }
+}
+
+.logo { text-align:center; padding:6px 0 2px; }
+.logo h1 {
+  font-family:'Exo 2',sans-serif;
+  font-size:2.4rem; font-weight:900;
+  background:linear-gradient(135deg,var(--red),var(--gold));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  letter-spacing:1px; line-height:1;
+  filter:drop-shadow(0 0 16px rgba(255,71,87,0.35));
+}
+.logo small { display:block; color:var(--muted); font-size:0.82rem; letter-spacing:2px; text-transform:uppercase; margin-top:5px; }
+
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:22px 20px;
+  position:relative; overflow:hidden;
+}
+.card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+
+.inp {
+  width:100%; padding:14px 16px;
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:var(--r-sm); color:var(--text);
+  font-family:'Rajdhani',sans-serif; font-size:1rem; font-weight:600;
+  letter-spacing:0.4px; outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  -webkit-appearance:none; margin-bottom:11px;
+}
+.inp:focus { border-color:var(--purple); box-shadow:var(--glow-purple); }
+.inp::placeholder { color:var(--muted2); font-weight:500; }
+
+.btn {
+  display:block; width:100%; padding:15px 20px; border:none;
+  border-radius:var(--r-sm); font-family:'Exo 2',sans-serif;
+  font-size:1rem; font-weight:700; letter-spacing:0.6px; cursor:pointer;
+  transition:transform 0.12s,opacity 0.15s,box-shadow 0.2s;
+  text-align:center; position:relative; overflow:hidden; margin-bottom:10px;
+}
+.btn:last-child { margin-bottom:0; }
+.btn::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,transparent 60%); pointer-events:none; }
+.btn:active  { transform:scale(0.96); opacity:0.88; }
+.btn:disabled { opacity:0.38; cursor:not-allowed; transform:none !important; }
+
+.btn-red    { background:linear-gradient(135deg,var(--red),var(--red2));       color:#fff;    box-shadow:0 4px 18px rgba(255,71,87,0.3);  }
+.btn-purple { background:linear-gradient(135deg,var(--purple),var(--purple2)); color:#fff;    box-shadow:0 4px 18px rgba(139,92,246,0.3); }
+.btn-gold   { background:linear-gradient(135deg,var(--gold),var(--gold2));     color:#1a1400; box-shadow:0 4px 18px rgba(255,211,42,0.3); }
+.btn-ghost  { background:transparent; border:1.5px solid var(--border2); color:var(--text); }
+
+.btn-red:hover:not(:disabled)    { box-shadow:0 4px 28px rgba(255,71,87,0.5);  }
+.btn-purple:hover:not(:disabled) { box-shadow:0 4px 28px rgba(139,92,246,0.5); }
+.btn-gold:hover:not(:disabled)   { box-shadow:0 4px 28px rgba(255,211,42,0.5); }
+
+.divider {
+  display:flex; align-items:center; gap:12px;
+  color:var(--muted); font-size:0.78rem; letter-spacing:1px;
+  text-transform:uppercase; margin:3px 0;
+}
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.err { color:var(--red); font-size:0.85rem; font-weight:600; text-align:center; min-height:20px; margin-top:4px; }
+
+.scores-bar {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-md); padding:13px 18px;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.sp { text-align:center; flex:1; min-width:0; }
+.sp .sp-name { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+.sp .sp-pts  { font-family:'Exo 2',sans-serif; font-size:2rem; font-weight:900; color:var(--gold); line-height:1; }
+.sp.me .sp-name { color:#ff9090; }
+.sp.me .sp-pts  { color:#ff7070; }
+.round-chip {
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:30px; padding:5px 13px;
+  font-family:'Exo 2',sans-serif; font-size:0.72rem; font-weight:700;
+  color:var(--muted); letter-spacing:0.8px; white-space:nowrap;
+}
+
+.timer-wrap { display:flex; justify-content:center; }
+.timer-ring {
+  width:76px; height:76px; border-radius:50%;
+  border:4px solid var(--purple);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Exo 2',sans-serif; font-size:2rem; font-weight:900;
+  color:var(--purple); box-shadow:var(--glow-purple); transition:all 0.3s;
+}
+.timer-ring.warn   { border-color:var(--gold);  color:var(--gold);  box-shadow:var(--glow-gold);  }
+.timer-ring.urgent { border-color:var(--red);   color:var(--red);   box-shadow:var(--glow-red);   animation:timerPulse 0.5s ease-in-out infinite; }
+@keyframes timerPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+
+.q-text { font-size:1.1rem; font-weight:600; line-height:1.6; text-align:center; color:#ccceff; margin-bottom:20px; }
+.opts   { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px; }
+.opt {
+  padding:13px 10px; background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:var(--r-sm); color:var(--text);
+  font-family:'Rajdhani',sans-serif; font-size:0.93rem; font-weight:600;
+  cursor:pointer; min-height:58px;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; transition:all 0.18s; line-height:1.3;
+}
+.opt:hover:not(:disabled) { border-color:var(--purple); background:#1a1a35; box-shadow:var(--glow-purple); }
+.opt.selected { border-color:var(--gold);  background:#1c1800; color:var(--gold);  box-shadow:var(--glow-gold);  }
+.opt.correct  { border-color:var(--green); background:#001a0a; color:var(--green); box-shadow:var(--glow-green); }
+.opt.wrong    { border-color:var(--red);   background:#1a0005; color:var(--red);   box-shadow:var(--glow-red);   }
+.opt:disabled { cursor:not-allowed; }
+
+.ans-dots { display:flex; gap:8px; }
+.ans-dot {
+  flex:1; padding:8px 6px; border-radius:8px;
+  background:var(--surface2); border:1px solid var(--border);
+  font-size:0.76rem; font-weight:600; text-align:center;
+  color:var(--muted); transition:all 0.2s;
+}
+.ans-dot.done { border-color:var(--green); color:var(--green); background:#001a0a; }
+
+.pill { padding:13px 16px; border-radius:var(--r-sm); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:0.95rem; text-align:center; }
+.pill-green  { background:#001a0a; border:1.5px solid var(--green);  color:var(--green);  }
+.pill-red    { background:#1a0005; border:1.5px solid var(--red);    color:var(--red);    }
+.pill-purple { background:#0e0020; border:1.5px solid var(--purple); color:var(--purple); }
+
+.dare-box { background:var(--bg2); border:2px solid var(--gold); border-radius:var(--r-md); padding:20px; text-align:center; box-shadow:var(--glow-gold); }
+.dare-box .dare-content { font-family:'Exo 2',sans-serif; font-size:1.25rem; font-weight:700; color:var(--gold); line-height:1.5; }
+.dare-box.green-dare { border-color:var(--green); box-shadow:var(--glow-green); }
+.dare-box.green-dare .dare-content { color:var(--green); }
+
+.room-id-wrap { text-align:center; padding:8px 0; }
+.room-id-wrap small { display:block; color:var(--muted); font-size:0.8rem; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; }
+.rid {
+  display:inline-block; font-family:'Exo 2',sans-serif;
+  font-size:2.8rem; font-weight:900; letter-spacing:12px; color:var(--gold);
+  background:var(--bg); border:2px dashed rgba(255,211,42,0.4);
+  border-radius:var(--r-md); padding:14px 22px 14px 34px;
+  margin-bottom:16px; text-shadow:var(--glow-gold);
+}
+
+.dot-anim::after { content:''; animation:dots 1.4s infinite step-end; }
+@keyframes dots { 0%{content:'';} 25%{content:'.';} 50%{content:'..';} 75%{content:'...';} }
+.waiting-card { text-align:center; padding:8px; color:var(--muted); font-size:0.92rem; }
+
+.trophy-wrap { text-align:center; padding:10px 0 6px; }
+.trophy-emoji { font-size:5rem; filter:drop-shadow(0 0 20px rgba(255,211,42,0.6)); }
+.winner-wrap { text-align:center; padding:4px 0 16px; }
+.winner-label { color:var(--muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.winner-name {
+  font-family:'Exo 2',sans-serif; font-size:2rem; font-weight:900;
+  background:linear-gradient(135deg,var(--gold),var(--red));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.score-cards { display:flex; gap:12px; }
+.score-card { flex:1; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-md); padding:18px; text-align:center; }
+.score-card.champ { border-color:var(--gold); background:#181200; box-shadow:var(--glow-gold); }
+.score-card .sc-name { font-size:0.78rem; color:var(--muted); margin-bottom:6px; }
+.score-card .sc-pts  { font-family:'Exo 2',sans-serif; font-size:2.5rem; font-weight:900; color:var(--muted); line-height:1; }
+.score-card.champ .sc-pts { color:var(--gold); }
+
+.both-correct-wrap { text-align:center; padding:36px 20px 32px; }
+.both-correct-wrap .bc-emoji { font-size:4rem; margin-bottom:14px; }
+.both-correct-wrap h2 { font-family:'Exo 2',sans-serif; font-size:1.6rem; font-weight:900; color:var(--green); margin-bottom:8px; }
+.both-correct-wrap .sub { color:var(--muted); font-size:0.9rem; }
+
+.disc-wrap { text-align:center; padding:36px 16px 32px; }
+.disc-wrap .disc-emoji { font-size:4rem; margin-bottom:16px; }
+.disc-wrap h2 { font-family:'Exo 2',sans-serif; font-size:1.5rem; font-weight:900; margin-bottom:10px; }
+.disc-wrap p  { color:var(--muted); font-size:0.92rem; margin-bottom:24px; line-height:1.6; }
+
+.section-h { font-family:'Exo 2',sans-serif; font-size:0.98rem; font-weight:700; color:var(--gold); margin-bottom:11px; }
+.count-footer { text-align:center; color:var(--muted); font-size:0.85rem; padding:4px; }
+.count-footer span { font-family:'Exo 2',sans-serif; font-weight:700; color:var(--text); }
+
+@media (max-width:380px) {
+  .logo h1  { font-size:2rem; }
+  .rid      { font-size:2.2rem; letter-spacing:8px; padding-left:28px; }
+  .opts     { gap:7px; }
+  .opt      { min-height:52px; font-size:0.86rem; }
+  .sp .sp-pts { font-size:1.7rem; }
+  .timer-ring { width:64px; height:64px; font-size:1.7rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="logo">
+    <h1>🎯 DARE BATTLE</h1>
+    <small>Answer wrong · Get dared · 1v1</small>
+  </div>
+  <div class="card">
+    <input class="inp" id="player-name" type="text" placeholder="Your player name" maxlength="15" autocomplete="off" autocorrect="off">
+    <button class="btn btn-red"    id="btn-create">🏠 Create Room</button>
+    <div class="divider">or join with code</div>
+    <input class="inp" id="join-id" type="text" placeholder="Enter 6-digit Room ID" maxlength="6" pattern="\d*" inputmode="numeric" autocomplete="off" style="margin-top:8px;">
+    <button class="btn btn-purple" id="btn-join">🚪 Join Room</button>
+    <div class="err" id="home-err"></div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="screen-waiting" class="screen">
+  <div class="logo"><h1>🎯 DARE BATTLE</h1></div>
+  <div class="card">
+    <div class="room-id-wrap">
+      <small>Share this code with your opponent</small>
+      <div class="rid" id="disp-rid">——————</div>
+      <button class="btn btn-ghost" id="btn-copy" style="width:auto;padding:10px 24px;margin:0 auto;display:block;">📋 Copy Room ID</button>
+    </div>
+  </div>
+  <div class="card waiting-card">Waiting for opponent<span class="dot-anim"></span></div>
+</div>
+
+<!-- QUESTION -->
+<div id="screen-question" class="screen">
+  <div class="scores-bar">
+    <div class="sp me"><div class="sp-name" id="q-my-name">YOU</div><div class="sp-pts" id="q-my-score">0</div></div>
+    <div class="round-chip" id="q-round">RND 1/5</div>
+    <div class="sp"><div class="sp-name" id="q-opp-name">OPP</div><div class="sp-pts" id="q-opp-score">0</div></div>
+  </div>
+  <div class="timer-wrap"><div class="timer-ring" id="timer">20</div></div>
+  <div class="card">
+    <div class="q-text" id="q-text">Loading...</div>
+    <div class="opts"   id="q-opts"></div>
+    <div class="ans-dots">
+      <div class="ans-dot" id="my-dot">You: thinking<span class="dot-anim"></span></div>
+      <div class="ans-dot" id="opp-dot">Opp: thinking<span class="dot-anim"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- DARE INPUT -->
+<div id="screen-dare-input" class="screen">
+  <div class="scores-bar">
+    <div class="sp me"><div class="sp-name" id="d-my-name">YOU</div><div class="sp-pts" id="d-my-score">0</div></div>
+    <div class="round-chip" id="d-round">RND 1/5</div>
+    <div class="sp"><div class="sp-name" id="d-opp-name">OPP</div><div class="sp-pts" id="d-opp-score">0</div></div>
+  </div>
+  <div id="d-summary" class="card"></div>
+  <div id="d-give" class="card" style="display:none">
+    <div class="section-h">🎯 Give a Dare!</div>
+    <p id="d-give-label" style="color:var(--muted);font-size:0.88rem;margin-bottom:11px;">Type a dare for your opponent:</p>
+    <input class="inp" id="dare-text" type="text" placeholder="e.g., Do 10 pushups now!" maxlength="120" autocomplete="off">
+    <button class="btn btn-gold" id="btn-submit-dare">🔥 Send Dare</button>
+  </div>
+  <div id="d-receive" class="pill pill-red" style="display:none">😬 You got it wrong! Waiting for your dare<span class="dot-anim"></span></div>
+  <div id="d-sent"    class="pill pill-purple" style="display:none">✅ Dare sent! Waiting for next phase<span class="dot-anim"></span></div>
+</div>
+
+<!-- SHOW DARE -->
+<div id="screen-show-dare" class="screen">
+  <div class="scores-bar">
+    <div class="sp me"><div class="sp-name" id="sd-my-name">YOU</div><div class="sp-pts" id="sd-my-score">0</div></div>
+    <div class="round-chip" id="sd-round">RND 1/5</div>
+    <div class="sp"><div class="sp-name" id="sd-opp-name">OPP</div><div class="sp-pts" id="sd-opp-score">0</div></div>
+  </div>
+  <div id="sd-content"></div>
+  <div class="count-footer">Next round in <span id="sd-num">5</span>s…</div>
+</div>
+
+<!-- BOTH CORRECT -->
+<div id="screen-both-correct" class="screen">
+  <div class="card">
+    <div class="both-correct-wrap">
+      <div class="bc-emoji">🎉</div>
+      <h2>Both Correct!</h2>
+      <p class="sub">No dare this round. Next in <span id="bc-num">3</span>s…</p>
+    </div>
+  </div>
+</div>
+
+<!-- FINISHED -->
+<div id="screen-finished" class="screen">
+  <div class="logo"><h1>🏆 GAME OVER</h1></div>
+  <div class="card">
+    <div class="trophy-wrap"><div class="trophy-emoji" id="f-trophy">🏆</div></div>
+    <div class="winner-wrap">
+      <div class="winner-label" id="f-label">WINNER</div>
+      <div class="winner-name"  id="f-winner">—</div>
+    </div>
+  </div>
+  <div class="score-cards" id="f-score-cards"></div>
+  <button class="btn btn-red" id="btn-play-again">🔄 Play Again</button>
+</div>
+
+<!-- DISCONNECT -->
+<div id="screen-disconnect" class="screen">
+  <div class="card">
+    <div class="disc-wrap">
+      <div class="disc-emoji">😕</div>
+      <h2>Player Left</h2>
+      <p>Your opponent disconnected. The match has ended.</p>
+      <button class="btn btn-red" id="btn-disc-back">Back to Home</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* ================================================================
+   IMPORTS
+   ================================================================ */
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, onDisconnect }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ================================================================
+   FIREBASE CONFIG
+   ================================================================ */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBjaLY5vhV_Ku-7Te29fqwfUdGowFMS4o0",
+  authDomain:        "darebattlegame.firebaseapp.com",
+  databaseURL:       "https://darebattlegame-default-rtdb.firebaseio.com",
+  projectId:         "darebattlegame",
+  storageBucket:     "darebattlegame.firebasestorage.app",
+  messagingSenderId: "1087709873594",
+  appId:             "1:1087709873594:web:a12104d44e149c1f5ac983"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const RP  = 'rooms';
+
+/* ================================================================
+   QUESTION BANK  — 20 questions, 5 chosen at random per game
+   ================================================================ */
+const QS = [
+  { q:"What is the capital of France?",              opts:["London","Berlin","Paris","Madrid"],               ans:2 },
+  { q:"Which planet is closest to the Sun?",         opts:["Venus","Mercury","Earth","Mars"],                 ans:1 },
+  { q:"How many sides does a hexagon have?",         opts:["5","6","7","8"],                                  ans:1 },
+  { q:"What is 15 × 8?",                             opts:["100","110","120","130"],                          ans:2 },
+  { q:"Who wrote Romeo and Juliet?",                 opts:["Dickens","Tolkien","Shakespeare","Hemingway"],    ans:2 },
+  { q:"What is the largest ocean on Earth?",         opts:["Atlantic","Indian","Arctic","Pacific"],           ans:3 },
+  { q:"How many continents are there?",              opts:["5","6","7","8"],                                  ans:2 },
+  { q:"Which element has the chemical symbol Au?",   opts:["Silver","Copper","Gold","Iron"],                  ans:2 },
+  { q:"How many bones in the adult human body?",     opts:["196","206","216","226"],                          ans:1 },
+  { q:"What is the square root of 144?",             opts:["11","12","13","14"],                              ans:1 },
+  { q:"What is the largest mammal on Earth?",        opts:["Elephant","Blue Whale","Giraffe","Hippo"],        ans:1 },
+  { q:"In which year did World War 2 end?",          opts:["1943","1944","1945","1946"],                      ans:2 },
+  { q:"What gas do plants absorb from the air?",     opts:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],  ans:2 },
+  { q:"How many seconds are in one hour?",           opts:["1800","2400","3600","4800"],                      ans:2 },
+  { q:"Which country has the Great Wall?",           opts:["Japan","India","China","Korea"],                  ans:2 },
+  { q:"What is the fastest land animal?",            opts:["Lion","Leopard","Cheetah","Horse"],               ans:2 },
+  { q:"How many players on a basketball team?",      opts:["4","5","6","7"],                                  ans:1 },
+  { q:"What is 7 × 9?",                              opts:["54","56","63","72"],                              ans:2 },
+  { q:"Which planet is known as the Red Planet?",    opts:["Venus","Jupiter","Mars","Saturn"],                ans:2 },
+  { q:"How many days are in a leap year?",           opts:["364","365","366","367"],                          ans:2 },
+];
+
+const ROUNDS = 5;
+const Q_SECS = 20;
+
+/* ================================================================
+   MUTABLE STATE
+   ================================================================ */
+let myPlayer = null;
+let roomId   = null;
+let myName   = '';
+let oppName  = 'Opponent';
+let timer    = null;
+let phaseKey = '';
+let answered = false;
+let dareSent = false;
+let didTx    = false;
+
+/* ================================================================
+   DOM HELPERS
+   ================================================================ */
+const el  = id => document.getElementById(id);
+const esc = s  => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  el(id).classList.add('active');
+}
+function setErr(msg) { el('home-err').textContent = msg; }
+function stopTimer() { clearInterval(timer); timer = null; }
+function opp()       { return myPlayer === 'player1' ? 'player2' : 'player1'; }
+
+function setBar(pfx, s) {
+  const sc = s.scores  || {};
+  const pl = s.players || {};
+  const on = pl[opp()]?.name || 'Opponent';
+  oppName = on;
+  el(`${pfx}-my-name`).textContent   = (myName || 'YOU').toUpperCase().slice(0,8);
+  el(`${pfx}-my-score`).textContent  = sc[myPlayer] ?? 0;
+  el(`${pfx}-opp-name`).textContent  = on.toUpperCase().slice(0,8);
+  el(`${pfx}-opp-score`).textContent = sc[opp()]    ?? 0;
+  el(`${pfx}-round`).textContent     = `RND ${s.round||1}/${ROUNDS}`;
+}
+
+/* ================================================================
+   ATTACH ALL EVENT LISTENERS HERE INSIDE THE MODULE
+   — This is the fix: no inline onclick attributes anywhere.
+   ================================================================ */
+el('btn-create').addEventListener('click', createRoom);
+el('btn-join').addEventListener('click', joinRoom);
+el('btn-copy').addEventListener('click', copyRoomId);
+el('btn-submit-dare').addEventListener('click', submitDare);
+el('btn-play-again').addEventListener('click', () => location.reload());
+el('btn-disc-back').addEventListener('click',  () => location.reload());
+
+el('player-name').addEventListener('keydown', e => { if (e.key === 'Enter') createRoom(); });
+el('join-id').addEventListener('keydown',     e => { if (e.key === 'Enter') joinRoom(); });
+el('join-id').addEventListener('input',       e => { e.target.value = e.target.value.replace(/\D/g,''); });
+el('dare-text').addEventListener('keydown',   e => { if (e.key === 'Enter') submitDare(); });
+
+/* ================================================================
+   COPY ROOM ID
+   ================================================================ */
+function copyRoomId() {
+  navigator.clipboard.writeText(roomId || '').then(() => {
+    const btn = el('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  }).catch(() => {
+    // Fallback for browsers that block clipboard without HTTPS
+    const ta = document.createElement('textarea');
+    ta.value = roomId || '';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = el('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  });
+}
+
+/* ================================================================
+   CREATE ROOM
+   ================================================================ */
+async function createRoom() {
+  const name = el('player-name').value.trim();
+  if (!name) { setErr('Enter your name first'); return; }
+  setErr('');
+  el('btn-create').disabled = true;
+
+  myName   = name;
+  myPlayer = 'player1';
+
+  let rid, tries = 0;
+  do {
+    rid = String(Math.floor(100000 + Math.random() * 900000));
+    const snap = await get(ref(db, `${RP}/${rid}`));
+    if (!snap.exists()) break;
+  } while (++tries < 10);
+  roomId = rid;
+
+  const qIdxs = [];
+  const used  = new Set();
+  while (qIdxs.length < ROUNDS) {
+    const i = Math.floor(Math.random() * QS.length);
+    if (!used.has(i)) { used.add(i); qIdxs.push(i); }
+  }
+
+  await set(ref(db, `${RP}/${roomId}`), {
+    players:         { player1: { name: myName, connected: true } },
+    scores:          { player1: 0, player2: 0 },
+    round:           1,
+    phase:           'waiting',
+    questionIndices: qIdxs,
+    roundStartTime:  0,
+    answers:         { player1: null, player2: null },
+    dares:           { toPlayer1: null, toPlayer2: null, p1Done: false, p2Done: false }
+  });
+
+  onDisconnect(ref(db, `${RP}/${roomId}/players/player1/connected`)).set(false);
+
+  el('disp-rid').textContent = roomId;
+  show('screen-waiting');
+  listenRoom();
+}
+
+/* ================================================================
+   JOIN ROOM
+   ================================================================ */
+async function joinRoom() {
+  const name = el('player-name').value.trim();
+  const rid  = el('join-id').value.trim();
+
+  if (!name)                { setErr('Enter your name first');         return; }
+  if (!/^\d{6}$/.test(rid)) { setErr('Enter a valid 6-digit Room ID'); return; }
+  setErr('');
+  el('btn-join').disabled = true;
+
+  const snap = await get(ref(db, `${RP}/${rid}`));
+  if (!snap.exists())              { setErr('Room not found');           el('btn-join').disabled=false; return; }
+  const data = snap.val();
+  if (data.players?.player2)       { setErr('Room is full!');            el('btn-join').disabled=false; return; }
+  if (data.phase !== 'waiting')    { setErr('Game already in progress'); el('btn-join').disabled=false; return; }
+
+  myName   = name;
+  myPlayer = 'player2';
+  roomId   = rid;
+
+  await update(ref(db, `${RP}/${roomId}`), {
+    'players/player2': { name: myName, connected: true },
+    phase:             'question',
+    roundStartTime:    Date.now()
+  });
+
+  onDisconnect(ref(db, `${RP}/${roomId}/players/player2/connected`)).set(false);
+  listenRoom();
+}
+
+/* ================================================================
+   LISTEN
+   ================================================================ */
+function listenRoom() {
+  onValue(ref(db, `${RP}/${roomId}`), snap => {
+    if (!snap.exists()) return;
+    handleState(snap.val());
+  });
+}
+
+/* ================================================================
+   STATE ROUTER
+   ================================================================ */
+function handleState(s) {
+  const pl = s.players || {};
+
+  if (!['waiting','finished'].includes(s.phase)) {
+    if (pl[opp()]?.connected === false) {
+      stopTimer();
+      show('screen-disconnect');
+      return;
+    }
+  }
+
+  oppName = pl[opp()]?.name || 'Opponent';
+
+  switch (s.phase) {
+    case 'waiting':      handleWaiting(s);     break;
+    case 'question':     handleQuestion(s);    break;
+    case 'dare_input':   handleDareInput(s);   break;
+    case 'show_dare':    handleShowDare(s);    break;
+    case 'both_correct': handleBothCorrect(s); break;
+    case 'finished':     handleFinished(s);    break;
+  }
+}
+
+/* ================================================================
+   WAITING
+   ================================================================ */
+function handleWaiting() {
+  el('disp-rid').textContent = roomId;
+  show('screen-waiting');
+}
+
+/* ================================================================
+   QUESTION
+   ================================================================ */
+function handleQuestion(s) {
+  const key   = `q-${s.round}`;
+  const isNew = phaseKey !== key;
+
+  if (isNew) {
+    phaseKey = key;
+    answered = false;
+    didTx    = false;
+    stopTimer();
+
+    const qi = s.questionIndices[(s.round||1) - 1];
+    const q  = QS[qi];
+
+    el('q-text').textContent = q.q;
+
+    const optsEl = el('q-opts');
+    optsEl.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className   = 'opt';
+      btn.textContent = opt;
+      btn.addEventListener('click', () => doAnswer(i));
+      optsEl.appendChild(btn);
+    });
+
+    show('screen-question');
+    startQTimer(s);
+  }
+
+  setBar('q', s);
+  refreshAnswerDots(s);
+
+  const myAns = s.answers?.[myPlayer];
+  if (myAns !== null && myAns !== undefined) {
+    answered = true;
+    stopTimer();
+    const t = el('timer');
+    if (t) { t.textContent = '✓'; t.className = 'timer-ring'; }
+    el('q-opts').querySelectorAll('.opt').forEach((b, i) => {
+      b.disabled = true;
+      if (i === myAns) b.classList.add('selected');
+    });
+  }
+
+  tryTxQuestion(s);
+}
+
+function startQTimer(s) {
+  stopTimer();
+  const start = s.roundStartTime || Date.now();
+
+  const tick = () => {
+    const left = Math.max(0, Q_SECS - Math.floor((Date.now() - start) / 1000));
+    const t = el('timer');
+    if (!t) return;
+    t.textContent = left;
+    t.className   = left > 10 ? 'timer-ring' : left > 5 ? 'timer-ring warn' : 'timer-ring urgent';
+    if (left <= 0) { stopTimer(); if (!answered) doAutoAnswer(); }
+  };
+
+  tick();
+  timer = setInterval(tick, 500);
+}
+
+function refreshAnswerDots(s) {
+  const ans = s.answers || {};
+  const md  = el('my-dot');
+  const od  = el('opp-dot');
+  if (!md || !od) return;
+
+  if (ans[myPlayer] !== null && ans[myPlayer] !== undefined) {
+    md.textContent = (myName||'You').slice(0,8) + ': answered ✓';
+    md.className   = 'ans-dot done';
+  } else {
+    md.innerHTML   = (myName||'You').slice(0,8) + ': thinking<span class="dot-anim"></span>';
+    md.className   = 'ans-dot';
+  }
+
+  if (ans[opp()] !== null && ans[opp()] !== undefined) {
+    od.textContent = oppName.slice(0,8) + ': answered ✓';
+    od.className   = 'ans-dot done';
+  } else {
+    od.innerHTML   = oppName.slice(0,8) + ': thinking<span class="dot-anim"></span>';
+    od.className   = 'ans-dot';
+  }
+}
+
+async function doAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+  el('q-opts').querySelectorAll('.opt').forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('selected');
+  });
+  const t = el('timer');
+  if (t) { t.textContent = '✓'; t.className = 'timer-ring'; }
+  await update(ref(db, `${RP}/${roomId}/answers`), { [myPlayer]: idx });
+}
+
+async function doAutoAnswer() {
+  if (answered) return;
+  answered = true;
+  await update(ref(db, `${RP}/${roomId}/answers`), { [myPlayer]: -1 });
+}
+
+async function tryTxQuestion(s) {
+  if (didTx || s.phase !== 'question') return;
+  const ans = s.answers || {};
+  if (ans.player1 === null || ans.player1 === undefined) return;
+  if (ans.player2 === null || ans.player2 === undefined) return;
+
+  didTx = true;
+  const qi      = s.questionIndices[(s.round||1) - 1];
+  const correct = QS[qi].ans;
+  const p1Wrong = ans.player1 !== correct;
+  const p2Wrong = ans.player2 !== correct;
+
+  const newScores = {
+    player1: (s.scores?.player1||0) + (p1Wrong ? 0 : 1),
+    player2: (s.scores?.player2||0) + (p2Wrong ? 0 : 1)
+  };
+
+  if (!p1Wrong && !p2Wrong) {
+    await update(ref(db, `${RP}/${roomId}`), { phase: 'both_correct', scores: newScores });
+  } else {
+    await update(ref(db, `${RP}/${roomId}`), {
+      phase:  'dare_input',
+      scores: newScores,
+      dares: {
+        toPlayer1: null, toPlayer2: null,
+        p1Done: !p2Wrong,
+        p2Done: !p1Wrong
+      }
+    });
+  }
+}
+
+/* ================================================================
+   DARE INPUT
+   ================================================================ */
+function handleDareInput(s) {
+  const key   = `di-${s.round}`;
+  const isNew = phaseKey !== key;
+
+  if (isNew) {
+    phaseKey = key;
+    dareSent = false;
+    didTx    = false;
+    stopTimer();
+    show('screen-dare-input');
+  }
+
+  setBar('d', s);
+
+  const qi       = s.questionIndices[(s.round||1) - 1];
+  const correct  = QS[qi].ans;
+  const ans      = s.answers || {};
+  const myWrong  = ans[myPlayer] !== correct;
+  const oppWrong = ans[opp()]    !== correct;
+  const dares    = s.dares || {};
+  const myDareDone = myPlayer === 'player1' ? dares.p1Done : dares.p2Done;
+
+  el('d-summary').innerHTML = `
+    <div style="font-family:'Exo 2',sans-serif;font-size:0.8rem;font-weight:700;
+         color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:11px;">
+      Round ${s.round} Results
+    </div>
+    <div class="pill ${myWrong?'pill-red':'pill-green'}" style="margin-bottom:8px;">
+      ${myWrong ? '❌ You got it wrong!' : '✅ You got it right!'}
+    </div>
+    <div class="pill ${oppWrong?'pill-red':'pill-green'}">
+      ${oppWrong ? '❌ '+esc(oppName)+' got it wrong!' : '✅ '+esc(oppName)+' got it right!'}
+    </div>
+  `;
+
+  el('d-give').style.display    = 'none';
+  el('d-receive').style.display = 'none';
+  el('d-sent').style.display    = 'none';
+
+  if (myWrong) el('d-receive').style.display = 'block';
+
+  if (oppWrong) {
+    if (myDareDone) {
+      el('d-sent').style.display = 'block';
+    } else {
+      el('d-give').style.display = 'block';
+      el('d-give-label').textContent = `Type a dare for ${oppName}:`;
+      if (!dareSent) el('dare-text').value = '';
+    }
+  }
+
+  if (!myWrong && !oppWrong) {
+    el('d-sent').style.display = 'block';
+    el('d-sent').innerHTML = 'Waiting for next phase<span class="dot-anim"></span>';
+  }
+
+  tryTxDare(s);
+}
+
+function submitDare() {
+  if (dareSent) return;
+  const text = el('dare-text').value.trim();
+  if (!text) { el('dare-text').focus(); return; }
+  dareSent = true;
+  el('btn-submit-dare').disabled = true;
+
+  const dareField = opp() === 'player1' ? 'toPlayer1' : 'toPlayer2';
+  const doneFlag  = myPlayer === 'player1' ? 'p1Done' : 'p2Done';
+
+  update(ref(db, `${RP}/${roomId}/dares`), { [dareField]: text, [doneFlag]: true });
+}
+
+async function tryTxDare(s) {
+  if (didTx || s.phase !== 'dare_input') return;
+  const d = s.dares || {};
+  if (!d.p1Done || !d.p2Done) return;
+  didTx = true;
+  await update(ref(db, `${RP}/${roomId}`), { phase: 'show_dare' });
+}
+
+/* ================================================================
+   SHOW DARE
+   ================================================================ */
+function handleShowDare(s) {
+  const key = `sd-${s.round}`;
+  if (phaseKey === key) return;
+  phaseKey = key;
+  didTx    = false;
+  stopTimer();
+
+  setBar('sd', s);
+
+  const qi       = s.questionIndices[(s.round||1) - 1];
+  const correct  = QS[qi].ans;
+  const ans      = s.answers || {};
+  const dares    = s.dares   || {};
+  const myWrong  = ans[myPlayer] !== correct;
+  const oppWrong = ans[opp()]    !== correct;
+  const myDare   = myPlayer === 'player1' ? dares.toPlayer1 : dares.toPlayer2;
+  const oppDare  = myPlayer === 'player1' ? dares.toPlayer2 : dares.toPlayer1;
+
+  let html = '';
+  if (myWrong && myDare) {
+    html += `
+      <div class="card" style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:2.8rem;margin-bottom:10px;">😱</div>
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;">
+          Your dare from ${esc(oppName)}
+        </div>
+        <div class="dare-box"><div class="dare-content">${esc(myDare)}</div></div>
+      </div>`;
+  }
+  if (oppWrong && oppDare) {
+    html += `
+      <div class="card" style="text-align:center;margin-bottom:12px;">
+        <div style="font-size:2.8rem;margin-bottom:10px;">😈</div>
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;">
+          ${esc(oppName)}'s dare
+        </div>
+        <div class="dare-box green-dare"><div class="dare-content">${esc(oppDare)}</div></div>
+      </div>`;
+  }
+
+  el('sd-content').innerHTML = html;
+  show('screen-show-dare');
+
+  let count = 5;
+  el('sd-num').textContent = count;
+  timer = setInterval(() => {
+    count--;
+    const n = el('sd-num');
+    if (n) n.textContent = count;
+    if (count <= 0) { stopTimer(); advanceRound(s); }
+  }, 1000);
+}
+
+/* ================================================================
+   BOTH CORRECT
+   ================================================================ */
+function handleBothCorrect(s) {
+  const key = `bc-${s.round}`;
+  if (phaseKey === key) return;
+  phaseKey = key;
+  didTx    = false;
+  stopTimer();
+
+  show('screen-both-correct');
+  let count = 3;
+  el('bc-num').textContent = count;
+  timer = setInterval(() => {
+    count--;
+    const n = el('bc-num');
+    if (n) n.textContent = count;
+    if (count <= 0) { stopTimer(); advanceRound(s); }
+  }, 1000);
+}
+
+/* ================================================================
+   ADVANCE ROUND
+   ================================================================ */
+async function advanceRound(s) {
+  if (didTx) return;
+  didTx = true;
+  const next = (s.round||1) + 1;
+  if (next > ROUNDS) {
+    await update(ref(db, `${RP}/${roomId}`), { phase: 'finished' });
+  } else {
+    await update(ref(db, `${RP}/${roomId}`), {
+      phase:          'question',
+      round:          next,
+      roundStartTime: Date.now(),
+      answers:        { player1: null, player2: null },
+      dares:          { toPlayer1: null, toPlayer2: null, p1Done: false, p2Done: false }
+    });
+  }
+}
+
+/* ================================================================
+   FINISHED
+   ================================================================ */
+function handleFinished(s) {
+  stopTimer();
+  phaseKey = 'fin';
+
+  const sc  = s.scores  || {};
+  const pl  = s.players || {};
+  const p1n = pl.player1?.name || 'Player 1';
+  const p2n = pl.player2?.name || 'Player 2';
+  const s1  = sc.player1 || 0;
+  const s2  = sc.player2 || 0;
+
+  let trophy, label, winner;
+  if      (s1 > s2) { trophy='🏆'; label='WINNER!';    winner=p1n; }
+  else if (s2 > s1) { trophy='🏆'; label='WINNER!';    winner=p2n; }
+  else              { trophy='🤝'; label="IT'S A TIE!"; winner='Great match!'; }
+
+  el('f-trophy').textContent = trophy;
+  el('f-label').textContent  = label;
+  el('f-winner').textContent = winner;
+
+  el('f-score-cards').innerHTML = `
+    <div class="score-card ${s1>s2?'champ':''}">
+      <div class="sc-name">${esc(p1n)}${p1n===myName?' (You)':''}</div>
+      <div class="sc-pts">${s1}</div>
+    </div>
+    <div class="score-card ${s2>s1?'champ':''}">
+      <div class="sc-name">${esc(p2n)}${p2n===myName?' (You)':''}</div>
+      <div class="sc-pts">${s2}</div>
+    </div>
+  `;
+
+  show('screen-finished');
+}
+</script>
+</body>
+</html>
