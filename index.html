@@ -409,7 +409,7 @@ firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
 /* ── CONSTANTS ─────────────────────────── */
-var ROUNDS = 5;
+var ROUNDS = 10;
 var Q_SECS = 60;
 var RP     = 'rooms';
 
@@ -1153,7 +1153,7 @@ el('btn-create').addEventListener('click',createRoom);
 el('btn-join').addEventListener('click',joinRoom);
 el('btn-copy').addEventListener('click',copyRoomId);
 el('btn-submit-dare').addEventListener('click',submitDare);
-el('btn-play-again').addEventListener('click',function(){location.reload();});
+el('btn-play-again').addEventListener('click', playAgain);
 el('btn-disc-back').addEventListener('click',function(){location.reload();});
 el('player-name').addEventListener('keydown',function(e){if(e.key==='Enter')createRoom();});
 el('join-id').addEventListener('keydown',function(e){if(e.key==='Enter')joinRoom();});
@@ -1644,6 +1644,38 @@ function handleFinished(s){
   show('screen-finished');
   // stop music on game over
   setMusicTrack(-1);
+}
+
+/* ── PLAY AGAIN ─────────────────────────────
+   Both players stay in same room.
+   Only player1 (room creator) resets the room.
+   Player2 just waits — Firebase listener handles it.
+─────────────────────────────────────────── */
+function playAgain(){
+  // Reset local state flags
+  phaseKey=''; answered=false; dareSent=false;
+  didTx=false; completeSent=false; verdictSent=false; countdownActive=false;
+
+  if(myPlayer==='player1'){
+    // Generate fresh questions and reset room
+    show('screen-loading');
+    generateAIQuestions().then(function(questions){
+      db.ref(RP+'/'+roomId).update({
+        scores:         {player1:0, player2:0},
+        round:          1,
+        phase:          'question',
+        questionData:   questions,
+        roundStartTime: Date.now(),
+        answers:        {player1:null, player2:null},
+        dares:          {toPlayer1:null,toPlayer2:null,p1Done:false,p2Done:false,completed:false,verdict:null},
+        chat:           null
+      });
+    });
+  } else {
+    // Player2: just show a waiting screen until player1 resets
+    show('screen-loading');
+    // The onValue listener will fire once player1 updates phase to 'question'
+  }
 }
 
 })();
